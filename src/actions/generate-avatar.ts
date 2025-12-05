@@ -76,6 +76,80 @@ export async function startAvatarGeneration() {
   }
 }
 
+export async function generateAvatarFromPrompt(promptInput: string) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Not authenticated");
+  }
+
+  try {
+    // Try to parse as JSON, otherwise treat as plain string
+    let prompt: any;
+    try {
+      prompt = JSON.parse(promptInput);
+    } catch {
+      // If not valid JSON, wrap it in an object
+      prompt = { prompt: promptInput };
+    }
+
+    // Create generation record
+    const [generation] = await db
+      .insert(generations)
+      .values({
+        userId: session.user.id,
+        prompt,
+        status: "pending",
+        triggerJobId: null,
+      })
+      .returning();
+
+    if (!generation) {
+      throw new Error("Failed to create generation record");
+    }
+
+    // Create avatar record linked to generation
+    const [avatar] = await db
+      .insert(avatars)
+      .values({
+        prompt,
+        userId: session.user.id,
+        generationId: generation.id,
+        imageUrl: null,
+      })
+      .returning();
+
+    if (!avatar) {
+      throw new Error("Failed to create avatar record");
+    }
+
+    // Trigger the generation task
+    const handle = await generateAvatarTask.trigger({
+      generationId: generation.id,
+    });
+
+    // Update generation with job ID
+    await db
+      .update(generations)
+      .set({
+        triggerJobId: handle.id,
+      })
+      .where(eq(generations.id, generation.id));
+
+    return {
+      success: true,
+      generationId: generation.id,
+      avatarId: avatar.id,
+      jobId: handle.id,
+    };
+  } catch (error) {
+    console.error("Failed to generate avatar from prompt:", error);
+    throw error;
+  }
+}
+
 export async function generateAllAvatars() {
   const session = await auth.api.getSession({
     headers: await headers(),

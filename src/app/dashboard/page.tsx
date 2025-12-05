@@ -1,7 +1,4 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,32 +6,18 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar";
+} from "@/components/ui/sidebar"
 
-export default async function DashboardPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    return redirect("/sign-in");
-  }
-
-  const user = session.user;
-
+export default function Page() {
   return (
     <SidebarProvider>
-      <AppSidebar user={{
-        name: user.name || "User",
-        email: user.email || "",
-        avatar: user.image || null,
-      }} />
+      <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
@@ -46,29 +29,27 @@ export default async function DashboardPage() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="/app">
-                    Dashboard
+                  <BreadcrumbLink href="#">
+                    Building Your Application
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Home</BreadcrumbPage>
+                  <BreadcrumbPage>Data Fetching</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <div className="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min p-6">
-            <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mb-2">
-              Welcome back, {user.name || user.email}!
-            </h1>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              Your email is: {user.email}
-            </p>
+          <div className="grid auto-rows-min gap-4 md:grid-cols-3">
+            <div className="bg-muted/50 aspect-video rounded-xl" />
+            <div className="bg-muted/50 aspect-video rounded-xl" />
+            <div className="bg-muted/50 aspect-video rounded-xl" />
           </div>
+          <div className="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
         </div>
       </SidebarInset>
     </SidebarProvider>
-  );
+  )
 }
