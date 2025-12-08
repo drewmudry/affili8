@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { generateAvatarFromPrompt } from "@/actions/generate-avatar";
 import { useRouter } from "next/navigation";
 import { AvatarListModal } from "./avatar-list-modal";
+import { Loader2 } from "lucide-react";
 
 interface CuratedAvatar {
   id: string;
@@ -13,10 +14,29 @@ interface CuratedAvatar {
   updatedAt: Date;
 }
 
-export function CuratedAvatarList({ avatars: initialAvatars }: { avatars: CuratedAvatar[] }) {
+export function CuratedAvatarList({ 
+  avatars: initialAvatars,
+  onSwitchToAllTab,
+}: { 
+  avatars: CuratedAvatar[];
+  onSwitchToAllTab?: () => void;
+}) {
   const [selectedAvatar, setSelectedAvatar] = useState<CuratedAvatar | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const router = useRouter();
+
+  // Poll for completed avatars if there are any generating
+  useEffect(() => {
+    const hasGeneratingAvatars = initialAvatars.some((avatar) => !avatar.imageUrl);
+    
+    if (!hasGeneratingAvatars) return;
+
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 3000); // Refresh every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [initialAvatars, router]);
 
   async function handleAvatarClick(avatar: CuratedAvatar) {
     setSelectedAvatar(avatar);
@@ -32,8 +52,11 @@ export function CuratedAvatarList({ avatars: initialAvatars }: { avatars: Curate
         : JSON.stringify(prompt);
       
       await generateAvatarFromPrompt(promptString);
-      // Close modal and refresh
+      // Close modal, switch to all tab, and refresh
       setSelectedAvatar(null);
+      if (onSwitchToAllTab) {
+        onSwitchToAllTab();
+      }
       router.refresh();
     } catch (error) {
       console.error("Error generating remix:", error);
@@ -61,8 +84,9 @@ export function CuratedAvatarList({ avatars: initialAvatars }: { avatars: Curate
                   loading="lazy"
                 />
               ) : (
-                <div className="aspect-[3/4] flex items-center justify-center bg-zinc-200 dark:bg-zinc-800">
-                  <p className="text-sm text-zinc-500">No image</p>
+                <div className="aspect-[3/4] flex flex-col items-center justify-center gap-2 bg-zinc-200 dark:bg-zinc-800">
+                  <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
+                  <p className="text-xs text-zinc-500 font-medium">Generating...</p>
                 </div>
               )}
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />

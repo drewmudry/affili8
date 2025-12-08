@@ -20,7 +20,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { GenerateAvatarModal } from "@/components/avatar/generate-avatar-modal";
+import { AvatarsPageClient } from "./avatars-client";
 
 export default async function AvatarsPage() {
   const session = await auth.api.getSession({
@@ -47,25 +47,21 @@ export default async function AvatarsPage() {
     .where(eq(avatars.userId, user.id))
     .orderBy(desc(avatars.createdAt));
 
-  const curatedData = curatedAvatars
-    .filter((avatar) => avatar.imageUrl)
-    .map((avatar) => ({
-      id: avatar.id,
-      imageUrl: avatar.imageUrl,
-      prompt: avatar.prompt,
-      createdAt: avatar.createdAt,
-      updatedAt: avatar.updatedAt,
-    }));
+  const curatedData = curatedAvatars.map((avatar) => ({
+    id: avatar.id,
+    imageUrl: avatar.imageUrl,
+    prompt: avatar.prompt,
+    createdAt: avatar.createdAt,
+    updatedAt: avatar.updatedAt,
+  }));
 
-  const userData = userAvatars
-    .filter((avatar) => avatar.imageUrl)
-    .map((avatar) => ({
-      id: avatar.id,
-      imageUrl: avatar.imageUrl,
-      prompt: avatar.prompt,
-      createdAt: avatar.createdAt,
-      updatedAt: avatar.updatedAt,
-    }));
+  const userData = userAvatars.map((avatar) => ({
+    id: avatar.id,
+    imageUrl: avatar.imageUrl,
+    prompt: avatar.prompt,
+    createdAt: avatar.createdAt,
+    updatedAt: avatar.updatedAt,
+  }));
 
   return (
     <SidebarProvider>
@@ -95,22 +91,18 @@ export default async function AvatarsPage() {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-            <div className="ml-auto">
-              <GenerateAvatarModal />
-            </div>
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
-                Avatars
-              </h1>
-              <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-                Browse curated avatars and your creations
-              </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+                  Avatars
+                </h1>
+              </div>
             </div>
-            <AvatarListWithTabs curatedAvatars={curatedData} userAvatars={userData} />
+            <AvatarsPageClient curatedAvatars={curatedData} userAvatars={userData} />
           </div>
         </div>
       </SidebarInset>

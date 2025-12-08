@@ -4,7 +4,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { generateAvatarFromPrompt, getAvatarStatus } from "@/actions/generate-avatar";
 
-export function GenerateFromPromptButton({ onComplete }: { onComplete?: () => void }) {
+export function GenerateFromPromptButton({ 
+  onComplete,
+  onGenerationStart,
+}: { 
+  onComplete?: () => void;
+  onGenerationStart?: (avatarId: string) => void;
+}) {
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
@@ -54,6 +60,10 @@ export function GenerateFromPromptButton({ onComplete }: { onComplete?: () => vo
       setAvatarId(result.avatarId);
       setIsPolling(true);
       setIsGenerating(false);
+      // Notify parent that generation has started
+      if (onGenerationStart) {
+        onGenerationStart(result.avatarId);
+      }
       // Don't clear prompt - let user see what they generated
     } catch (err) {
       console.error("Error generating avatar:", err);

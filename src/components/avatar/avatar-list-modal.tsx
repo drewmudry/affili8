@@ -106,10 +106,10 @@ export function AvatarListModal({ avatar, onClose, onGenerateNew, isGenerating =
             )}
 
             {/* Control Buttons */}
-            <div className="absolute -right-16 top-0 flex flex-col gap-2">
+            <div className="absolute -right-20 top-0 flex flex-col gap-2">
               <button
                 onClick={onClose}
-                className="p-2 bg-card hover:bg-muted rounded-full text-foreground transition-colors shadow-lg border border-zinc-200 dark:border-zinc-800"
+                className="h-10 w-10 flex items-center justify-center bg-card hover:bg-muted rounded-full text-foreground transition-colors shadow-lg border border-zinc-200 dark:border-zinc-800"
                 aria-label="Close modal"
               >
                 <X size={20} />
@@ -117,7 +117,7 @@ export function AvatarListModal({ avatar, onClose, onGenerateNew, isGenerating =
 
               <button
                 onClick={handleCopyPrompt}
-                className="p-2 bg-card hover:bg-muted rounded-full text-foreground transition-colors shadow-lg border border-zinc-200 dark:border-zinc-800"
+                className="h-10 w-10 flex items-center justify-center bg-card hover:bg-muted rounded-full text-foreground transition-colors shadow-lg border border-zinc-200 dark:border-zinc-800"
                 aria-label="Copy prompt"
                 title="Copy Prompt"
               >
@@ -126,7 +126,7 @@ export function AvatarListModal({ avatar, onClose, onGenerateNew, isGenerating =
 
               <button
                 onClick={() => setIsRemixing(!isRemixing)}
-                className={`p-2 rounded-full transition-all shadow-lg font-semibold flex items-center justify-center gap-2 px-3 border ${
+                className={`h-10 rounded-full transition-all shadow-lg font-semibold flex items-center justify-center gap-2 px-3 border ${
                   isRemixing
                     ? "bg-primary text-primary-foreground hover:bg-primary/90 border-primary"
                     : "bg-card text-foreground hover:bg-muted border-zinc-200 dark:border-zinc-800"
