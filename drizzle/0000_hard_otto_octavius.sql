@@ -82,6 +82,21 @@ CREATE TABLE "products" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "uploads" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" text NOT NULL,
+	"type" text NOT NULL,
+	"url" text NOT NULL,
+	"filename" text NOT NULL,
+	"mime_type" text NOT NULL,
+	"size" bigint NOT NULL,
+	"title" text,
+	"description" text,
+	"demo" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "avatars" ADD CONSTRAINT "avatars_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
@@ -89,6 +104,7 @@ ALTER TABLE "avatars" ADD CONSTRAINT "avatars_generation_id_generations_id_fk" F
 ALTER TABLE "avatars" ADD CONSTRAINT "avatars_remixed_from_id_avatars_id_fk" FOREIGN KEY ("remixed_from_id") REFERENCES "public"."avatars"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "generations" ADD CONSTRAINT "generations_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "products" ADD CONSTRAINT "products_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "uploads" ADD CONSTRAINT "uploads_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "account_userId_idx" ON "account" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "session_userId_idx" ON "session" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "verification_identifier_idx" ON "verification" USING btree ("identifier");--> statement-breakpoint
@@ -99,4 +115,7 @@ CREATE INDEX "generations_triggerJobId_idx" ON "generations" USING btree ("trigg
 CREATE INDEX "generations_status_idx" ON "generations" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "products_userId_idx" ON "products" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "products_type_idx" ON "products" USING btree ("type");--> statement-breakpoint
-CREATE INDEX "products_parsed_idx" ON "products" USING btree ("parsed");
+CREATE INDEX "products_parsed_idx" ON "products" USING btree ("parsed");--> statement-breakpoint
+CREATE INDEX "uploads_user_id_idx" ON "uploads" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "uploads_type_idx" ON "uploads" USING btree ("type");--> statement-breakpoint
+CREATE INDEX "uploads_demo_idx" ON "uploads" USING btree ("demo");

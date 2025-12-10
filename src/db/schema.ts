@@ -9,3 +9,6 @@ export * from "./generations/schema";
 
 // Export products schema
 export * from "./products/schema";
+
+// Export uploads schema
+export * from "./uploads/schema";
