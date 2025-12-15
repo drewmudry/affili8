@@ -45,7 +45,7 @@ export function AvatarListModal({ avatar, onClose, onGenerateNew, isGenerating =
       <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
         <div
           className={`relative pointer-events-auto transition-all duration-500 ease-out ${
-            isRemixing ? "w-[900px]" : "w-[280px]"
+            isRemixing ? "w-[1350px]" : "w-[420px]"
           }`}
         >
           <div className="flex gap-4">
@@ -53,7 +53,7 @@ export function AvatarListModal({ avatar, onClose, onGenerateNew, isGenerating =
             <div className="flex-shrink-0">
               <div
                 className={`bg-card rounded-lg overflow-hidden shadow-2xl transition-all duration-500 border border-zinc-200 dark:border-zinc-800 ${
-                  isRemixing ? "w-48" : "w-64"
+                  isRemixing ? "w-72" : "w-96"
                 }`}
               >
                 {avatar.imageUrl ? (
