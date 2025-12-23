@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { X, Zap, Copy, Check, Wand2, Loader2, Sparkles, Video } from "lucide-react"
+import { X, Zap, Copy, Check, Wand2, Loader2, Sparkles, Video, Image } from "lucide-react"
 import { generateAnimationFromAvatar } from "@/actions/generate-animation"
 
 interface Avatar {
@@ -26,6 +26,7 @@ export function AvatarListModal({ avatar, onClose, onRemix, isGenerating = false
   const [isRemixing, setIsRemixing] = useState(false)
   const [remixInstructions, setRemixInstructions] = useState("")
   const [hasCopied, setHasCopied] = useState(false)
+  const [hasCopiedImage, setHasCopiedImage] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const [animePrompt, setAnimePrompt] = useState("")
   const [isGeneratingAnimation, setIsGeneratingAnimation] = useState(false)
@@ -43,6 +44,13 @@ export function AvatarListModal({ avatar, onClose, onRemix, isGenerating = false
     navigator.clipboard.writeText(JSON.stringify(avatar.prompt))
     setHasCopied(true)
     setTimeout(() => setHasCopied(false), 2000)
+  }
+
+  const handleCopyImage = () => {
+    if (!avatar.imageUrl) return
+    navigator.clipboard.writeText(avatar.imageUrl)
+    setHasCopiedImage(true)
+    setTimeout(() => setHasCopiedImage(false), 2000)
   }
 
   const handleAnimeClick = () => {
@@ -78,9 +86,8 @@ export function AvatarListModal({ avatar, onClose, onRemix, isGenerating = false
       {/* Modal Container */}
       <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none p-4">
         <div
-          className={`relative pointer-events-auto transition-all duration-500 ease-out ${
-            isRemixing || isAnimating ? "w-full max-w-[700px]" : "w-[420px]"
-          }`}
+          className={`relative pointer-events-auto transition-all duration-500 ease-out w-full ${isRemixing || isAnimating ? "max-w-[700px]" : "max-w-[420px]"
+            }`}
         >
           <div className="flex gap-4">
             {/* Main Modal */}
@@ -128,9 +135,9 @@ export function AvatarListModal({ avatar, onClose, onRemix, isGenerating = false
                 </div>
 
                 <div className="pt-4 mt-4 border-t border-zinc-100 dark:border-zinc-800">
-                  <Button 
-                    onClick={handleRemixSubmit} 
-                    disabled={isGenerating || !remixInstructions.trim()} 
+                  <Button
+                    onClick={handleRemixSubmit}
+                    disabled={isGenerating || !remixInstructions.trim()}
                     className="w-full gap-2"
                   >
                     {isGenerating ? (
@@ -209,9 +216,8 @@ export function AvatarListModal({ avatar, onClose, onRemix, isGenerating = false
             )}
 
             {/* Control Buttons */}
-            <div className={`absolute top-0 flex flex-col gap-2 transition-all duration-500 ease-out ${
-              isRemixing || isAnimating ? "-right-24" : "-right-20"
-            }`}>
+            <div className={`absolute top-0 flex flex-col gap-2 transition-all duration-500 ease-out ${isRemixing || isAnimating ? "-right-24" : "-right-20"
+              }`}>
               <button
                 onClick={onClose}
                 className="h-10 w-10 flex items-center justify-center bg-card hover:bg-muted rounded-full text-foreground transition-colors shadow-lg border border-zinc-200 dark:border-zinc-800"
@@ -220,25 +226,36 @@ export function AvatarListModal({ avatar, onClose, onRemix, isGenerating = false
                 <X size={20} />
               </button>
 
-              <button
-                onClick={handleCopyPrompt}
-                className="h-10 w-10 flex items-center justify-center bg-card hover:bg-muted rounded-full text-foreground transition-colors shadow-lg border border-zinc-200 dark:border-zinc-800"
-                aria-label="Copy prompt"
-                title="Copy Prompt"
-              >
-                {hasCopied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCopyPrompt}
+                  className="h-10 w-10 flex items-center justify-center bg-card hover:bg-muted rounded-full text-foreground transition-colors shadow-lg border border-zinc-200 dark:border-zinc-800"
+                  aria-label="Copy prompt"
+                  title="Copy Prompt"
+                >
+                  {hasCopied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
+                </button>
+
+                <button
+                  onClick={handleCopyImage}
+                  className="h-10 w-10 flex items-center justify-center bg-card hover:bg-muted rounded-full text-foreground transition-colors shadow-lg border border-zinc-200 dark:border-zinc-800"
+                  aria-label="Copy image URL"
+                  title="Copy Image URL"
+                  disabled={!avatar.imageUrl}
+                >
+                  {hasCopiedImage ? <Check size={18} className="text-green-500" /> : <Image size={18} />}
+                </button>
+              </div>
 
               <button
                 onClick={() => setIsRemixing(!isRemixing)}
                 disabled={!avatar.imageUrl}
-                className={`h-10 rounded-full transition-all shadow-lg font-semibold flex items-center justify-center gap-2 px-3 border ${
-                  isRemixing
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90 border-primary"
-                    : !avatar.imageUrl
+                className={`h-10 rounded-full transition-all shadow-lg font-semibold flex items-center justify-center gap-2 px-3 border ${isRemixing
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90 border-primary"
+                  : !avatar.imageUrl
                     ? "bg-card text-foreground/50 border-zinc-200 dark:border-zinc-800 cursor-not-allowed opacity-50"
                     : "bg-card text-foreground hover:bg-muted border-zinc-200 dark:border-zinc-800"
-                }`}
+                  }`}
                 aria-label="Remix content"
                 title={!avatar.imageUrl ? "Avatar must have an image to remix" : "Remix this avatar"}
               >
@@ -248,11 +265,10 @@ export function AvatarListModal({ avatar, onClose, onRemix, isGenerating = false
 
               <button
                 onClick={handleAnimeClick}
-                className={`h-10 rounded-full transition-all shadow-lg font-semibold flex items-center justify-center gap-2 px-3 border ${
-                  isAnimating
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90 border-primary"
-                    : "bg-card text-foreground hover:bg-muted border-zinc-200 dark:border-zinc-800"
-                }`}
+                className={`h-10 rounded-full transition-all shadow-lg font-semibold flex items-center justify-center gap-2 px-3 border ${isAnimating
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90 border-primary"
+                  : "bg-card text-foreground hover:bg-muted border-zinc-200 dark:border-zinc-800"
+                  }`}
                 aria-label="Animate avatar"
                 title="Animate this avatar"
               >
