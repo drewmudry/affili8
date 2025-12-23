@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { getAvatars } from "@/actions/get-avatars"
-import { generateAvatarFromPrompt } from "@/actions/generate-avatar"
+import { remixAvatar } from "@/actions/generate-avatar"
 import { Loader2 } from "lucide-react"
 import { AvatarListModal } from "./avatar-list-modal"
 
@@ -15,6 +16,7 @@ interface Avatar {
 }
 
 export function AvatarList() {
+  const router = useRouter()
   const [avatars, setAvatars] = useState<Avatar[]>([])
   const [selectedAvatar, setSelectedAvatar] = useState<Avatar | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -36,29 +38,21 @@ export function AvatarList() {
     fetchAvatars()
   }, [])
 
-  const handleGenerateNew = async (prompt: any) => {
-    if (!prompt) return;
+  const handleRemix = async (avatarId: string, instructions: string) => {
+    if (!instructions.trim()) return;
     setIsGenerating(true);
     try {
-      const result = await generateAvatarFromPrompt(prompt);
-
-      // ensure result has the correct Avatar structure
-      if (
-        result &&
-        typeof result === "object" &&
-        "id" in result &&
-        "imageUrl" in result &&
-        "prompt" in result &&
-        "createdAt" in result &&
-        "updatedAt" in result
-      ) {
-        setAvatars([...avatars, result as Avatar]);
-        setSelectedAvatar(result as Avatar);
-      } else {
-        setError("Failed to generate new avatar: Invalid response from server");
-      }
+      await remixAvatar(avatarId, instructions);
+      // Refresh the avatars list to show the new remix
+      const data = await getAvatars();
+      setAvatars(data);
+      // Close the modal
+      setSelectedAvatar(null);
+      // Refresh the page to show the new avatar
+      router.refresh();
     } catch (err) {
-      setError("Failed to generate new avatar");
+      setError(err instanceof Error ? err.message : "Failed to remix avatar");
+      alert(err instanceof Error ? err.message : "Failed to remix avatar");
     } finally {
       setIsGenerating(false);
     }
@@ -119,7 +113,7 @@ export function AvatarList() {
         <AvatarListModal
           avatar={selectedAvatar}
           onClose={handleClose}
-          onGenerateNew={handleGenerateNew}
+          onRemix={handleRemix}
           isGenerating={isGenerating}
         />
       )}

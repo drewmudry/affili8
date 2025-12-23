@@ -6,75 +6,7 @@ import { db } from "@/index";
 import { avatars, generations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateAvatarTask } from "@/trigger/generate-avatar";
-import { avatarPrompts } from "../../avatarPrompts";
 
-export async function startAvatarGeneration() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Not authenticated");
-  }
-
-  try {
-    // Get the first prompt as a proof of concept
-    const prompt = avatarPrompts[0].prompt;
-
-    // Create generation record
-    const [generation] = await db
-      .insert(generations)
-      .values({
-        userId: session.user.id,
-        prompt,
-        status: "pending",
-        triggerJobId: null,
-      })
-      .returning();
-
-    if (!generation) {
-      throw new Error("Failed to create generation record");
-    }
-
-    // Create avatar record linked to generation
-    const [avatar] = await db
-      .insert(avatars)
-      .values({
-        prompt,
-        userId: session.user.id,
-        generationId: generation.id,
-        imageUrl: null,
-      })
-      .returning();
-
-    if (!avatar) {
-      throw new Error("Failed to create avatar record");
-    }
-
-    // Trigger the generation task
-    const handle = await generateAvatarTask.trigger({
-      generationId: generation.id,
-    });
-
-    // Update generation with job ID
-    await db
-      .update(generations)
-      .set({
-        triggerJobId: handle.id,
-      })
-      .where(eq(generations.id, generation.id));
-
-    return {
-      success: true,
-      generationId: generation.id,
-      avatarId: avatar.id,
-      jobId: handle.id,
-    };
-  } catch (error) {
-    console.error("Failed to start avatar generation:", error);
-    throw error;
-  }
-}
 
 export async function generateAvatarFromPrompt(promptInput: string) {
   const session = await auth.api.getSession({
@@ -150,7 +82,7 @@ export async function generateAvatarFromPrompt(promptInput: string) {
   }
 }
 
-export async function generateAllAvatars() {
+export async function remixAvatar(avatarId: string, instructions: string) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -159,98 +91,84 @@ export async function generateAllAvatars() {
     throw new Error("Not authenticated");
   }
 
+  if (!instructions.trim()) {
+    throw new Error("Instructions cannot be empty");
+  }
+
   try {
-    const results = [];
+    // Fetch the source avatar
+    const [sourceAvatar] = await db
+      .select()
+      .from(avatars)
+      .where(eq(avatars.id, avatarId))
+      .limit(1);
 
-    // Process all prompts
-    for (let i = 0; i < avatarPrompts.length; i++) {
-      const prompt = avatarPrompts[i].prompt;
-
-      try {
-        // Create generation record
-        const [generation] = await db
-          .insert(generations)
-          .values({
-            userId: session.user.id,
-            prompt,
-            status: "pending",
-            triggerJobId: null,
-          })
-          .returning();
-
-        if (!generation) {
-          console.error(`Failed to create generation for prompt ${i + 1}`);
-          results.push({
-            index: i + 1,
-            success: false,
-            error: "Failed to create generation record",
-          });
-          continue;
-        }
-
-        // Create avatar record linked to generation
-        const [avatar] = await db
-          .insert(avatars)
-          .values({
-            prompt,
-            userId: session.user.id,
-            generationId: generation.id,
-            imageUrl: null,
-          })
-          .returning();
-
-        if (!avatar) {
-          console.error(`Failed to create avatar for prompt ${i + 1}`);
-          results.push({
-            index: i + 1,
-            success: false,
-            error: "Failed to create avatar record",
-          });
-          continue;
-        }
-
-        // Trigger the generation task
-        const handle = await generateAvatarTask.trigger({
-          generationId: generation.id,
-        });
-
-        // Update generation with job ID
-        await db
-          .update(generations)
-          .set({
-            triggerJobId: handle.id,
-          })
-          .where(eq(generations.id, generation.id));
-
-        results.push({
-          index: i + 1,
-          success: true,
-          generationId: generation.id,
-          avatarId: avatar.id,
-          jobId: handle.id,
-        });
-      } catch (error) {
-        console.error(`Error processing prompt ${i + 1}:`, error);
-        results.push({
-          index: i + 1,
-          success: false,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
+    if (!sourceAvatar) {
+      throw new Error("Avatar not found");
     }
 
-    const successful = results.filter((r) => r.success).length;
-    const failed = results.filter((r) => !r.success).length;
+    // Check if source avatar has an image
+    // Note: We allow remixing any avatar (including curated ones with userId = null)
+    // because the remix creates a new avatar owned by the current user
+    if (!sourceAvatar.imageUrl) {
+      throw new Error("Source avatar must have an image to remix");
+    }
+
+    // Create generation record with instructions
+    const [generation] = await db
+      .insert(generations)
+      .values({
+        userId: session.user.id,
+        prompt: { instructions, remixFrom: avatarId },
+        status: "pending",
+        triggerJobId: null,
+      })
+      .returning();
+
+    if (!generation) {
+      throw new Error("Failed to create generation record");
+    }
+
+    // Create avatar record linked to generation and source avatar
+    const [remixedAvatar] = await db
+      .insert(avatars)
+      .values({
+        prompt: sourceAvatar.prompt, // Keep original prompt structure
+        userId: session.user.id,
+        generationId: generation.id,
+        remixedFromId: avatarId,
+        imageUrl: null,
+      })
+      .returning();
+
+    if (!remixedAvatar) {
+      throw new Error("Failed to create remixed avatar record");
+    }
+
+    // Trigger the remix generation task
+    const { remixAvatarTask } = await import("@/trigger/generate-avatar");
+    const handle = await remixAvatarTask.trigger({
+      generationId: generation.id,
+      sourceImageUrl: sourceAvatar.imageUrl,
+      instructions: instructions.trim(),
+    });
+
+    // Update generation with job ID
+    await db
+      .update(generations)
+      .set({
+        triggerJobId: handle.id,
+      })
+      .where(eq(generations.id, generation.id));
 
     return {
       success: true,
-      total: avatarPrompts.length,
-      successful,
-      failed,
-      results,
+      generationId: generation.id,
+      avatarId: remixedAvatar.id,
+      jobId: handle.id,
     };
   } catch (error) {
-    console.error("Failed to generate all avatars:", error);
+    console.error("Failed to remix avatar:", error);
     throw error;
   }
 }

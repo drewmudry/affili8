@@ -186,6 +186,115 @@ export async function generateImage(
 }
 
 /**
+ * Generate images from a reference image and text instructions (image-to-image)
+ * 
+ * @param referenceImageUrl - URL of the reference image to use as a base
+ * @param instructions - Text instructions describing the changes to make (e.g., "change her shirt to a black spaghetti strap tank top")
+ * @param options - Optional configuration for image generation
+ * @returns Promise resolving to an array of generated images
+ * 
+ * @example
+ * ```typescript
+ * const images = await generateImageFromReference('https://example.com/avatar.jpg', 'change her shirt to a black spaghetti strap tank top');
+ * const firstImage = images[0];
+ * // Use firstImage.dataUrl directly in an <img> src attribute
+ * ```
+ */
+export async function generateImageFromReference(
+  referenceImageUrl: string,
+  instructions: string,
+  options: ImageGenerationOptions = {}
+): Promise<ImageGenerationResponse[]> {
+  const {
+    numberOfImages = 1,
+    aspectRatio = '9:16',
+    imageSize = '1K',
+    outputMimeType = 'image/jpeg',
+    includeRaiReason = false,
+    personGeneration = PersonGeneration.ALLOW_ADULT,
+  } = options;
+
+  try {
+    // Fetch the reference image
+    const imageResponse = await fetch(referenceImageUrl);
+    if (!imageResponse.ok) {
+      throw new Error(`Failed to fetch reference image: ${imageResponse.statusText}`);
+    }
+    
+    const imageBuffer = await imageResponse.arrayBuffer();
+    const imageBytes = Buffer.from(imageBuffer).toString('base64');
+    const imageMimeType = imageResponse.headers.get('content-type') || 'image/jpeg';
+
+    // Create a multimodal prompt with the reference image and instructions
+    // The API expects contents to be an array with parts containing both image and text
+    const contents = [
+      {
+        parts: [
+          {
+            inlineData: {
+              data: imageBytes,
+              mimeType: imageMimeType,
+            },
+          },
+          {
+            text: `Based on this reference image, generate a new image with the following modifications: ${instructions}. Keep everything else the same, only apply the requested changes.`,
+          },
+        ],
+      },
+    ];
+
+    // Use gemini-3-pro-image-preview with multimodal input
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-image-preview',
+      contents: contents,
+      config: {
+        responseModalities: ['IMAGE'],
+        imageConfig: {
+          aspectRatio: aspectRatio,
+          imageSize: imageSize,
+        },
+      },
+    });
+
+    // Extract image data from the response
+    const images: ImageGenerationResponse[] = [];
+    
+    if (response.candidates && response.candidates.length > 0) {
+      for (const candidate of response.candidates) {
+        if (candidate.content?.parts) {
+          for (const part of candidate.content.parts) {
+            if (part.inlineData?.data) {
+              const generatedImageBytes = part.inlineData.data;
+              const mimeType = part.inlineData.mimeType || outputMimeType;
+              const dataUrl = `data:${mimeType};base64,${generatedImageBytes}`;
+              
+              images.push({
+                imageBytes: generatedImageBytes,
+                dataUrl,
+              });
+              
+              // Limit to requested number of images
+              if (images.length >= numberOfImages) {
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (images.length === 0) {
+      throw new Error('No images were generated');
+    }
+
+    return images;
+  } catch (error) {
+    console.error('Image-to-image generation error:', error);
+    throw error;
+  }
+}
+
+/**
  * Generate text using Gemini 3 Pro
  * 
  * @param prompt - Text prompt for generation

@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { X, Zap, Copy, Check, Wand2, Loader2, Sparkles, Video } from "lucide-react"
-import { EditablePrompt } from "./editable-prompt"
 import { generateAnimationFromAvatar } from "@/actions/generate-animation"
 import { Input } from "@/components/ui/input"
 import {
@@ -27,26 +26,30 @@ interface Avatar {
 interface AvatarListModalProps {
   avatar: Avatar
   onClose: () => void
-  onGenerateNew: (prompt: any) => Promise<void>
+  onRemix: (avatarId: string, instructions: string) => Promise<void>
   isGenerating?: boolean
 }
 
-export function AvatarListModal({ avatar, onClose, onGenerateNew, isGenerating = false }: AvatarListModalProps) {
+export function AvatarListModal({ avatar, onClose, onRemix, isGenerating = false }: AvatarListModalProps) {
   const router = useRouter()
   const [isRemixing, setIsRemixing] = useState(false)
-  const [editedPrompt, setEditedPrompt] = useState<any>(avatar.prompt)
+  const [remixInstructions, setRemixInstructions] = useState("")
   const [hasCopied, setHasCopied] = useState(false)
   const [isAnimeModalOpen, setIsAnimeModalOpen] = useState(false)
   const [animePrompt, setAnimePrompt] = useState("")
   const [isGeneratingAnimation, setIsGeneratingAnimation] = useState(false)
 
-  const handleSubmit = async () => {
-    await onGenerateNew(editedPrompt)
+  const handleRemixSubmit = async () => {
+    if (!remixInstructions.trim()) {
+      return
+    }
+    await onRemix(avatar.id, remixInstructions.trim())
     setIsRemixing(false)
+    setRemixInstructions("")
   }
 
   const handleCopyPrompt = () => {
-    navigator.clipboard.writeText(JSON.stringify(editedPrompt))
+    navigator.clipboard.writeText(JSON.stringify(avatar.prompt))
     setHasCopied(true)
     setTimeout(() => setHasCopied(false), 2000)
   }
@@ -115,19 +118,33 @@ export function AvatarListModal({ avatar, onClose, onGenerateNew, isGenerating =
               <div className="flex-1 bg-card rounded-lg shadow-2xl border border-zinc-200 dark:border-zinc-800 p-4 overflow-y-auto max-h-96 animate-in slide-in-from-left-1/2 flex flex-col">
                 <div className="flex items-center gap-2 mb-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">
                   <Sparkles className="h-5 w-5 text-blue-500" />
-                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Edit & Remix</h3>
+                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Remix Avatar</h3>
                 </div>
 
-                <div className="flex-1 overflow-y-auto pr-2">
-                  {editedPrompt ? (
-                    <EditablePrompt prompt={editedPrompt} onChange={setEditedPrompt} />
-                  ) : (
-                    <div className="text-zinc-500 text-center mt-10">No prompt data found.</div>
-                  )}
+                <div className="flex-1 flex flex-col gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                      What would you like to change?
+                    </label>
+                    <textarea
+                      value={remixInstructions}
+                      onChange={(e) => setRemixInstructions(e.target.value)}
+                      placeholder="e.g., change her shirt to a black spaghetti strap tank top, make her hair blonde, add sunglasses..."
+                      className="w-full min-h-[120px] px-3 py-2 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400 resize-none"
+                      disabled={isGenerating}
+                    />
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                      Describe the changes you want to make to this avatar. The image will be used as a reference.
+                    </p>
+                  </div>
                 </div>
 
                 <div className="pt-4 mt-4 border-t border-zinc-100 dark:border-zinc-800">
-                  <Button onClick={handleSubmit} disabled={isGenerating} className="w-full gap-2">
+                  <Button 
+                    onClick={handleRemixSubmit} 
+                    disabled={isGenerating || !remixInstructions.trim()} 
+                    className="w-full gap-2"
+                  >
                     {isGenerating ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -136,7 +153,7 @@ export function AvatarListModal({ avatar, onClose, onGenerateNew, isGenerating =
                     ) : (
                       <>
                         <Wand2 className="h-4 w-4" />
-                        Generate New Avatar
+                        Generate Remix
                       </>
                     )}
                   </Button>
@@ -165,12 +182,16 @@ export function AvatarListModal({ avatar, onClose, onGenerateNew, isGenerating =
 
               <button
                 onClick={() => setIsRemixing(!isRemixing)}
+                disabled={!avatar.imageUrl}
                 className={`h-10 rounded-full transition-all shadow-lg font-semibold flex items-center justify-center gap-2 px-3 border ${
                   isRemixing
                     ? "bg-primary text-primary-foreground hover:bg-primary/90 border-primary"
+                    : !avatar.imageUrl
+                    ? "bg-card text-foreground/50 border-zinc-200 dark:border-zinc-800 cursor-not-allowed opacity-50"
                     : "bg-card text-foreground hover:bg-muted border-zinc-200 dark:border-zinc-800"
                 }`}
                 aria-label="Remix content"
+                title={!avatar.imageUrl ? "Avatar must have an image to remix" : "Remix this avatar"}
               >
                 <Zap size={18} />
                 <span className="text-xs hidden sm:inline">{isRemixing ? "Done" : "Remix"}</span>

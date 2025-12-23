@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { generateAvatarFromPrompt } from "@/actions/generate-avatar";
+import { remixAvatar } from "@/actions/generate-avatar";
 import { useRouter } from "next/navigation";
 import { AvatarListModal } from "./avatar-list-modal";
 import { Loader2 } from "lucide-react";
@@ -42,16 +42,12 @@ export function CuratedAvatarList({
     setSelectedAvatar(avatar);
   }
 
-  async function handleGenerateNew(prompt: any) {
-    if (!prompt) return;
+  async function handleRemix(avatarId: string, instructions: string) {
+    if (!instructions.trim()) return;
 
     setIsGenerating(true);
     try {
-      const promptString = typeof prompt === "string" 
-        ? prompt 
-        : JSON.stringify(prompt);
-      
-      await generateAvatarFromPrompt(promptString);
+      await remixAvatar(avatarId, instructions.trim());
       // Close modal, switch to all tab, and refresh
       setSelectedAvatar(null);
       if (onSwitchToAllTab) {
@@ -99,7 +95,7 @@ export function CuratedAvatarList({
         <AvatarListModal
           avatar={selectedAvatar}
           onClose={() => setSelectedAvatar(null)}
-          onGenerateNew={handleGenerateNew}
+          onRemix={handleRemix}
           isGenerating={isGenerating}
         />
       )}
