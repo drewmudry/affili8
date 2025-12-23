@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { X, Zap, Copy, Check, Wand2, Loader2, Sparkles, Video } from "lucide-react"
 import { EditablePrompt } from "./editable-prompt"
@@ -31,6 +32,7 @@ interface AvatarListModalProps {
 }
 
 export function AvatarListModal({ avatar, onClose, onGenerateNew, isGenerating = false }: AvatarListModalProps) {
+  const router = useRouter()
   const [isRemixing, setIsRemixing] = useState(false)
   const [editedPrompt, setEditedPrompt] = useState<any>(avatar.prompt)
   const [hasCopied, setHasCopied] = useState(false)
@@ -61,13 +63,14 @@ export function AvatarListModal({ avatar, onClose, onGenerateNew, isGenerating =
     setIsGeneratingAnimation(true)
     try {
       await generateAnimationFromAvatar(avatar.id, animePrompt)
+      // Close modals and navigate to animations page
       setIsAnimeModalOpen(false)
+      onClose() // Close the avatar modal too
       setAnimePrompt("")
-      // Optionally redirect to animations page or show success message
+      router.push("/app/animations")
     } catch (error) {
       console.error("Failed to generate animation:", error)
       alert("Failed to generate animation. Please try again.")
-    } finally {
       setIsGeneratingAnimation(false)
     }
   }
@@ -180,7 +183,7 @@ export function AvatarListModal({ avatar, onClose, onGenerateNew, isGenerating =
                 title="Animate this avatar"
               >
                 <Video size={18} />
-                <span className="text-xs hidden sm:inline">Anime</span>
+                <span className="text-xs hidden sm:inline">Animate</span>
               </button>
             </div>
           </div>

@@ -31,6 +31,13 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       items: [],
     },
     {
+      title: "Animations",
+      url: "/app/animations",
+      icon: Film,
+      isActive: false,
+      items: [],
+    },
+    {
       title: "Products",
       url: "/app/products",
       icon: Package,
@@ -48,13 +55,6 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       title: "Demos",
       url: "/app/demos",
       icon: Video,
-      isActive: false,
-      items: [],
-    },
-    {
-      title: "Animations",
-      url: "/app/animations",
-      icon: Film,
       isActive: false,
       items: [],
     },
