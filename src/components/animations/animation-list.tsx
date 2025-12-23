@@ -69,30 +69,34 @@ export function AnimationList({ initialAnimations }: { initialAnimations: Animat
             className="group relative cursor-pointer overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-900 aspect-[9/16] transition-transform hover:scale-[1.02] border border-zinc-200 dark:border-zinc-800"
           >
             {animation.videoUrl ? (
-              <video
-                src={animation.videoUrl}
-                className="h-full w-full object-cover"
-                loop
-                muted
-                playsInline
-                onMouseEnter={(e) => e.currentTarget.play()}
-                onMouseLeave={(e) => {
-                  e.currentTarget.pause();
-                  e.currentTarget.currentTime = 0;
-                }}
-              />
+              <>
+                {/* Video preview - plays on hover, muted, no audio */}
+                <video
+                  src={animation.videoUrl}
+                  className="h-full w-full object-cover"
+                  loop
+                  muted
+                  playsInline
+                  preload="metadata"
+                  onMouseEnter={(e) => {
+                    const video = e.currentTarget;
+                    video.play().catch(() => {
+                      // Silently handle autoplay restrictions
+                    });
+                  }}
+                  onMouseLeave={(e) => {
+                    const video = e.currentTarget;
+                    video.pause();
+                    video.currentTime = 0;
+                  }}
+                />
+                {/* Subtle overlay on hover */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 pointer-events-none" />
+              </>
             ) : (
               <div className="flex h-full flex-col items-center justify-center gap-2 text-zinc-400">
                 <Loader2 className="h-6 w-6 animate-spin" />
                 <span className="text-xs font-medium">Generating...</span>
-              </div>
-            )}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-            {animation.videoUrl && (
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="bg-black/50 rounded-full p-3">
-                  <Play className="h-6 w-6 text-white" fill="white" />
-                </div>
               </div>
             )}
           </div>
