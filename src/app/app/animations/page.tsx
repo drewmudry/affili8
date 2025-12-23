@@ -1,9 +1,7 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { db } from "@/index";
-import { animations } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { getAnimations } from "@/actions/get-animations";
 import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
@@ -32,21 +30,9 @@ export default async function AnimationsPage() {
 
   const user = session.user;
 
-  // Get user's animations
-  const userAnimations = await db
-    .select()
-    .from(animations)
-    .where(eq(animations.userId, user.id))
-    .orderBy(desc(animations.createdAt));
+  // Get curated and personal animations with avatar data
+  const animationData = await getAnimations();
 
-  const animationData = userAnimations.map((animation) => ({
-    id: animation.id,
-    videoUrl: animation.videoUrl,
-    prompt: animation.prompt,
-    avatarId: animation.avatarId,
-    createdAt: animation.createdAt,
-    updatedAt: animation.updatedAt,
-  }));
 
   return (
     <SidebarProvider>

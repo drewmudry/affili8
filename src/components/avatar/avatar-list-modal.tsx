@@ -73,7 +73,7 @@ export function AvatarListModal({ avatar, onClose, onRemix, isGenerating = false
     <>
       {/* Remix Panel */}
       {isRemixing && (
-        <div className="w-[360px] mr-4 bg-card rounded-lg shadow-2xl border border-zinc-200 dark:border-zinc-800 p-4 overflow-y-auto max-h-[576px] animate-in slide-in-from-left-1/2 flex flex-col">
+        <div className="w-[400px] mr-4 bg-card rounded-lg shadow-2xl border border-zinc-200 dark:border-zinc-800 p-4 overflow-y-auto max-h-[576px] animate-in slide-in-from-left-1/2 flex flex-col">
           <div className="flex items-center gap-2 mb-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
             <Sparkles className="h-4 w-4 text-blue-500" />
             <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">Remix Avatar</h3>
@@ -87,7 +87,7 @@ export function AvatarListModal({ avatar, onClose, onRemix, isGenerating = false
               <textarea
                 value={remixInstructions}
                 onChange={(e) => setRemixInstructions(e.target.value)}
-                placeholder="e.g., change her shirt to a black spaghetti strap tank top, make her hair blonde, add sunglasses..."
+                placeholder="e.g., change shirt color to black, make hair blonde, add sunglasses..."
                 className="w-full min-h-[80px] px-3 py-2 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400 resize-none"
                 disabled={isGenerating}
               />
@@ -121,7 +121,7 @@ export function AvatarListModal({ avatar, onClose, onRemix, isGenerating = false
 
       {/* Animate Panel */}
       {isAnimating && (
-        <div className="w-[360px] mr-4 bg-card rounded-lg shadow-2xl border border-zinc-200 dark:border-zinc-800 p-4 overflow-y-auto max-h-[576px] animate-in slide-in-from-left-1/2 flex flex-col">
+        <div className="w-[400px] mr-4 bg-card rounded-lg shadow-2xl border border-zinc-200 dark:border-zinc-800 p-4 overflow-y-auto max-h-[576px] animate-in slide-in-from-left-1/2 flex flex-col">
           <div className="flex items-center gap-2 mb-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
             <Video className="h-4 w-4 text-blue-500" />
             <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">Animate Avatar</h3>

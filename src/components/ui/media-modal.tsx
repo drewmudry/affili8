@@ -79,7 +79,7 @@ export function MediaModal({
             {/* Modal Container */}
             <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none p-4">
                 <div
-                    className={`pointer-events-auto transition-all duration-500 ease-out w-full ${isPanelOpen ? "max-w-[700px]" : "max-w-[420px]"
+                    className={`pointer-events-auto transition-all duration-500 ease-out w-full ${isPanelOpen ? "max-w-[900px]" : "max-w-[420px]"
                         }`}
                 >
                     <div className="flex gap-4">
@@ -105,6 +105,7 @@ export function MediaModal({
                                         controls
                                         autoPlay
                                         loop
+                                        muted
                                         playsInline
                                     />
                                 )}

@@ -7,8 +7,14 @@ interface Animation {
   videoUrl: string | null;
   prompt: string;
   avatarId: string;
+  userId: string | null;
   createdAt: Date;
   updatedAt: Date;
+  avatar: {
+    id: string;
+    imageUrl: string | null;
+    prompt: any;
+  } | null;
 }
 
 export function AnimationsPageClient({
