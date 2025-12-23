@@ -2,8 +2,18 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { X, Zap, Copy, Check, Wand2, Loader2, Sparkles } from "lucide-react"
+import { X, Zap, Copy, Check, Wand2, Loader2, Sparkles, Video } from "lucide-react"
 import { EditablePrompt } from "./editable-prompt"
+import { generateAnimationFromAvatar } from "@/actions/generate-animation"
+import { Input } from "@/components/ui/input"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface Avatar {
   id: string
@@ -24,6 +34,9 @@ export function AvatarListModal({ avatar, onClose, onGenerateNew, isGenerating =
   const [isRemixing, setIsRemixing] = useState(false)
   const [editedPrompt, setEditedPrompt] = useState<any>(avatar.prompt)
   const [hasCopied, setHasCopied] = useState(false)
+  const [isAnimeModalOpen, setIsAnimeModalOpen] = useState(false)
+  const [animePrompt, setAnimePrompt] = useState("")
+  const [isGeneratingAnimation, setIsGeneratingAnimation] = useState(false)
 
   const handleSubmit = async () => {
     await onGenerateNew(editedPrompt)
@@ -34,6 +47,29 @@ export function AvatarListModal({ avatar, onClose, onGenerateNew, isGenerating =
     navigator.clipboard.writeText(JSON.stringify(editedPrompt))
     setHasCopied(true)
     setTimeout(() => setHasCopied(false), 2000)
+  }
+
+  const handleAnimeClick = () => {
+    setIsAnimeModalOpen(true)
+  }
+
+  const handleGenerateAnimation = async () => {
+    if (!animePrompt.trim()) {
+      return
+    }
+
+    setIsGeneratingAnimation(true)
+    try {
+      await generateAnimationFromAvatar(avatar.id, animePrompt)
+      setIsAnimeModalOpen(false)
+      setAnimePrompt("")
+      // Optionally redirect to animations page or show success message
+    } catch (error) {
+      console.error("Failed to generate animation:", error)
+      alert("Failed to generate animation. Please try again.")
+    } finally {
+      setIsGeneratingAnimation(false)
+    }
   }
 
   return (
@@ -136,10 +172,68 @@ export function AvatarListModal({ avatar, onClose, onGenerateNew, isGenerating =
                 <Zap size={18} />
                 <span className="text-xs hidden sm:inline">{isRemixing ? "Done" : "Remix"}</span>
               </button>
+
+              <button
+                onClick={handleAnimeClick}
+                className="h-10 rounded-full transition-all shadow-lg font-semibold flex items-center justify-center gap-2 px-3 border bg-card text-foreground hover:bg-muted border-zinc-200 dark:border-zinc-800"
+                aria-label="Animate avatar"
+                title="Animate this avatar"
+              >
+                <Video size={18} />
+                <span className="text-xs hidden sm:inline">Anime</span>
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Animation Generation Modal */}
+      <Dialog open={isAnimeModalOpen} onOpenChange={setIsAnimeModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Animate Avatar</DialogTitle>
+            <DialogDescription>
+              Enter a prompt describing how you want to animate this avatar. The animation will be generated using the avatar image and your prompt.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Input
+              placeholder="e.g., A gentle swaying motion, walking forward, waving hello..."
+              value={animePrompt}
+              onChange={(e) => setAnimePrompt(e.target.value)}
+              disabled={isGeneratingAnimation}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsAnimeModalOpen(false)
+                setAnimePrompt("")
+              }}
+              disabled={isGeneratingAnimation}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleGenerateAnimation}
+              disabled={!animePrompt.trim() || isGeneratingAnimation}
+            >
+              {isGeneratingAnimation ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Video className="mr-2 h-4 w-4" />
+                  Generate Animation
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

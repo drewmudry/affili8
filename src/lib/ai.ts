@@ -397,3 +397,140 @@ export async function* generateTextProStream(
   }
 }
 
+/**
+ * Configuration options for video generation
+ */
+export interface VideoGenerationOptions {
+  /** Reference image(s) to guide the video generation (base64 encoded) */
+  referenceImages?: string[];
+  /** Duration of the video in seconds */
+  duration?: number;
+  /** Whether to disable audio generation (default: true) */
+  disableAudio?: boolean;
+}
+
+/**
+ * Response from video generation
+ */
+export interface VideoGenerationResponse {
+  /** Base64 encoded video data */
+  videoBytes: string;
+  /** Data URL for direct use in video src attribute */
+  dataUrl: string;
+  /** Operation ID for polling status */
+  operationId?: string;
+}
+
+/**
+ * Generate videos using Veo 3.1 from an image and prompt
+ * 
+ * @param prompt - Text description of the animation/video to generate
+ * @param imageUrl - URL of the avatar image to animate
+ * @param options - Optional configuration for video generation
+ * @returns Promise resolving to generated video
+ * 
+ * @example
+ * ```typescript
+ * const video = await generateVideo('A gentle swaying motion', 'https://example.com/avatar.jpg');
+ * // Use video.dataUrl directly in a <video> src attribute
+ * ```
+ */
+export async function generateVideo(
+  prompt: string,
+  imageUrl: string,
+  options: VideoGenerationOptions = {}
+): Promise<VideoGenerationResponse> {
+  try {
+    // Fetch the image from the URL
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+      throw new Error(`Failed to fetch image: ${imageResponse.statusText}`);
+    }
+    
+    const imageBuffer = await imageResponse.arrayBuffer();
+    // Convert to base64 string - the API expects imageBytes to be a string, not a Buffer
+    const imageBytes = Buffer.from(imageBuffer).toString('base64');
+    const imageMimeType = imageResponse.headers.get('content-type') || 'image/jpeg';
+
+    // Add system instruction to disable sound/voice generation
+    // Prepend to the prompt to ensure it's followed
+    // Using clear, explicit language to prevent audio generation
+    const enhancedPrompt = options.disableAudio === false 
+      ? prompt 
+      : `CRITICAL INSTRUCTION: DO NOT GENERATE ANY SOUND, VOICE, AUDIO, OR SPEECH. This must be a completely silent video with zero audio track. Generate visual content only. ${prompt}`;
+
+    // Initiate video generation with Veo 3.1
+    // The image parameter sets the first frame of the video
+    // Config specifies vertical aspect ratio (9:16) for portrait/vertical videos
+    let operation = await ai.models.generateVideos({
+      model: 'veo-3.1-generate-preview',
+      prompt: enhancedPrompt,
+      image: {
+        imageBytes: imageBytes, // Base64 string - this becomes the first frame
+        mimeType: imageMimeType,
+      },
+      config: {
+        aspectRatio: '9:16', // Vertical format for portrait videos
+      },
+    });
+
+    // Poll the operation status until the video is ready
+    const maxAttempts = 60; // 10 minutes max (60 * 10 seconds)
+    let attempts = 0;
+
+    while (!operation.done && attempts < maxAttempts) {
+      console.log("Waiting for video generation to complete...");
+      await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait 10 seconds
+      operation = await ai.operations.getVideosOperation({
+        operation: operation,
+      });
+      attempts++;
+    }
+
+    if (!operation.done) {
+      throw new Error('Video generation timed out');
+    }
+
+    if (!operation.response?.generatedVideos || operation.response.generatedVideos.length === 0) {
+      throw new Error('No video was generated');
+    }
+
+    // Download the generated video
+    // According to docs: ai.files.download({ file: ..., downloadPath: "..." })
+    // But we need the data in memory, so we'll use a temp file approach
+    const videoFile = operation.response.generatedVideos[0].video;
+    
+    // Use a temporary file path for download
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    const os = await import('os');
+    
+    const tempPath = path.join(os.tmpdir(), `veo-video-${Date.now()}-${Math.random().toString(36).substring(7)}.mp4`);
+    
+    await ai.files.download({
+      file: videoFile,
+      downloadPath: tempPath,
+    });
+    
+    // Read the video file into a buffer
+    const videoData = await fs.readFile(tempPath);
+    
+    // Clean up temp file
+    await fs.unlink(tempPath).catch(() => {});
+
+    // Convert video to base64
+    const videoBytes = videoData.toString('base64');
+    const videoMimeType = 'video/mp4'; // Veo typically generates MP4
+    const dataUrl = `data:${videoMimeType};base64,${videoBytes}`;
+
+    return {
+      videoBytes,
+      dataUrl,
+      operationId: operation.name,
+    };
+  } catch (error) {
+    console.error('Video generation error:', error);
+    throw error;
+  }
+}
+

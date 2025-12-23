@@ -12,3 +12,6 @@ export * from "./products/schema";
 
 // Export uploads schema
 export * from "./uploads/schema";
+
+// Export animations schema
+export * from "./animations/schema";

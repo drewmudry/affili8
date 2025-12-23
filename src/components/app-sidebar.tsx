@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { User, Package, Upload, Video } from "lucide-react"
+import { User, Package, Upload, Video, Film } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
@@ -48,6 +48,13 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       title: "Demos",
       url: "/app/demos",
       icon: Video,
+      isActive: false,
+      items: [],
+    },
+    {
+      title: "Animations",
+      url: "/app/animations",
+      icon: Film,
       isActive: false,
       items: [],
     },

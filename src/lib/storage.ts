@@ -86,3 +86,41 @@ export async function getPresignedUploadUrl(
     throw error;
   }
 }
+
+export async function uploadVideo(
+  base64Data: string,
+  filename: string,
+  contentType: string = "video/mp4"
+) {
+  // Convert base64 to buffer
+  const buffer = Buffer.from(base64Data, "base64");
+
+  const command = new PutObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: filename,
+    Body: buffer,
+    ContentType: contentType,
+  });
+
+  try {
+    await s3Client.send(command);
+    
+    // Construct the public URL
+    let publicUrl: string;
+    
+    if (process.env.AWS_PUBLIC_URL) {
+      // Use custom public URL if provided (for CloudFront, custom domains, etc.)
+      publicUrl = `${process.env.AWS_PUBLIC_URL}/${filename}`;
+    } else {
+      // Default AWS S3 public URL format
+      const region = process.env.AWS_REGION || "us-east-1";
+      const bucket = process.env.AWS_BUCKET_NAME;
+      publicUrl = `https://${bucket}.s3.${region}.amazonaws.com/${filename}`;
+    }
+    
+    return publicUrl;
+  } catch (error) {
+    console.error("Error uploading video to S3:", error);
+    throw error;
+  }
+}

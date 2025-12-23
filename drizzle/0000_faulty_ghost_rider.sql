@@ -97,6 +97,17 @@ CREATE TABLE "uploads" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "animations" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"video_url" text,
+	"prompt" text NOT NULL,
+	"avatar_id" uuid NOT NULL,
+	"user_id" text,
+	"generation_id" uuid,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "avatars" ADD CONSTRAINT "avatars_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
@@ -105,6 +116,9 @@ ALTER TABLE "avatars" ADD CONSTRAINT "avatars_remixed_from_id_avatars_id_fk" FOR
 ALTER TABLE "generations" ADD CONSTRAINT "generations_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "products" ADD CONSTRAINT "products_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "uploads" ADD CONSTRAINT "uploads_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "animations" ADD CONSTRAINT "animations_avatar_id_avatars_id_fk" FOREIGN KEY ("avatar_id") REFERENCES "public"."avatars"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "animations" ADD CONSTRAINT "animations_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "animations" ADD CONSTRAINT "animations_generation_id_generations_id_fk" FOREIGN KEY ("generation_id") REFERENCES "public"."generations"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "account_userId_idx" ON "account" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "session_userId_idx" ON "session" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "verification_identifier_idx" ON "verification" USING btree ("identifier");--> statement-breakpoint
@@ -118,4 +132,7 @@ CREATE INDEX "products_type_idx" ON "products" USING btree ("type");--> statemen
 CREATE INDEX "products_parsed_idx" ON "products" USING btree ("parsed");--> statement-breakpoint
 CREATE INDEX "uploads_user_id_idx" ON "uploads" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "uploads_type_idx" ON "uploads" USING btree ("type");--> statement-breakpoint
-CREATE INDEX "uploads_demo_idx" ON "uploads" USING btree ("demo");
+CREATE INDEX "uploads_demo_idx" ON "uploads" USING btree ("demo");--> statement-breakpoint
+CREATE INDEX "animations_userId_idx" ON "animations" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "animations_avatarId_idx" ON "animations" USING btree ("avatar_id");--> statement-breakpoint
+CREATE INDEX "animations_generationId_idx" ON "animations" USING btree ("generation_id");
